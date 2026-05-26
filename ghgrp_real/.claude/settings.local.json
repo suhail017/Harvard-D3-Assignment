@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python src/ingest.py)",
+      "Bash(python3 src/ingest.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(mkdir -p /Users/suhail/Downloads/ghgrp_real/.claude)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}

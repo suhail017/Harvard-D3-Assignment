@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ghg-dashboard",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Users/suhail/Downloads/ghgrp_real/serve.py"],
+      "port": 8734
+    }
+  ]
+}

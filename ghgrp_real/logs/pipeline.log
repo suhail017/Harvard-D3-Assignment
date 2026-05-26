@@ -1,0 +1,84 @@
+2026-05-24 16:12:50 | INFO | ingest | ================================================================
+2026-05-24 16:12:50 | INFO | ingest | REAL-DATA INGESTION — live sources only, no fabricated values
+2026-05-24 16:12:50 | INFO | ingest | ================================================================
+2026-05-24 16:12:55 | INFO | ingest | OWID ✓ (64 US rows)
+2026-05-24 16:13:02 | ERROR | ingest | EPA GHGRP failed (expected in restricted sandbox): [EPA Envirofacts GHGRP] could not fetch https://data.epa.gov/efservice/PUB_DIM_FACILITY/0:9999/CSV after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://data.epa.gov/efservice/PUB_DIM_FACILITY/0:9999/CSV. This source must be reachable; no fabricated fallback is used.
+2026-05-24 16:13:02 | INFO | ingest | EIA disabled in config (set sources.eia=true + key to enable)
+2026-05-24 16:13:08 | ERROR | ingest | NOAA failed (expected in restricted sandbox): [NOAA NCEI Climate at a Glance] could not fetch https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/national/time-series/110/cdd/ann/12/2010-2023.json after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/national/time-series/110/cdd/ann/12/2010-2023.json. This source must be reachable; no fabricated fallback is used.
+2026-05-24 16:13:08 | INFO | ingest | Provenance manifest → /home/claude/ghgrp_real/data/interim/provenance.json
+2026-05-24 16:13:08 | WARNING | ingest | 2 source(s) unavailable: ['epa', 'noaa']
+2026-05-24 16:13:57 | INFO | analyze | ================================================================
+2026-05-24 16:13:57 | INFO | analyze | ANALYSIS — real data only; analyses gated on available columns
+2026-05-24 16:13:57 | INFO | analyze | ================================================================
+2026-05-24 16:13:57 | INFO | analyze | Loaded owid_us: (64, 79)
+2026-05-24 16:13:57 | INFO | analyze | OWID CO2: latest 4918.4 Mt (1960–2023), peak 6126.9 Mt in 2005
+2026-05-24 16:13:57 | INFO | analyze | OWID trend: Spearman rho=0.765 (p=0.0000), linear slope=35.4 Mt/yr
+2026-05-24 16:13:57 | WARNING | analyze | No EPA GHGRP panel (source was unreachable at ingest); skipping EPA trend/forecast
+2026-05-24 16:13:57 | INFO | analyze | Analysis results → /home/claude/ghgrp_real/outputs/tables/analysis_results.json
+2026-05-24 16:14:17 | INFO | pipeline | Probing real data sources for reachability...
+2026-05-24 16:14:17 | INFO | pipeline |   owid : HTTP 200 — reachable
+2026-05-24 16:14:17 | INFO | pipeline |   epa  : HTTP 403 — NOT reachable
+2026-05-24 16:14:18 | INFO | pipeline |   eia  : HTTP 403 — NOT reachable
+2026-05-24 16:14:18 | INFO | pipeline |   noaa : HTTP 403 — NOT reachable
+2026-05-24 16:15:25 | INFO | pipeline | ================================================================
+2026-05-24 16:15:25 | INFO | pipeline | GHGRP REAL-DATA PIPELINE v2.0.0
+2026-05-24 16:15:25 | INFO | pipeline | Steps: ['ingest', 'analyze']
+2026-05-24 16:15:25 | INFO | pipeline | ================================================================
+2026-05-24 16:15:25 | INFO | ingest | ================================================================
+2026-05-24 16:15:25 | INFO | ingest | REAL-DATA INGESTION — live sources only, no fabricated values
+2026-05-24 16:15:25 | INFO | ingest | ================================================================
+2026-05-24 16:15:28 | INFO | ingest | OWID ✓ (64 US rows)
+2026-05-24 16:15:35 | ERROR | ingest | EPA GHGRP failed (expected in restricted sandbox): [EPA Envirofacts GHGRP] could not fetch https://data.epa.gov/efservice/PUB_DIM_FACILITY/0:9999/CSV after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://data.epa.gov/efservice/PUB_DIM_FACILITY/0:9999/CSV. This source must be reachable; no fabricated fallback is used.
+2026-05-24 16:15:35 | INFO | ingest | EIA disabled in config (set sources.eia=true + key to enable)
+2026-05-24 16:15:41 | ERROR | ingest | NOAA failed (expected in restricted sandbox): [NOAA NCEI Climate at a Glance] could not fetch https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/national/time-series/110/cdd/ann/12/2010-2023.json after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/national/time-series/110/cdd/ann/12/2010-2023.json. This source must be reachable; no fabricated fallback is used.
+2026-05-24 16:15:41 | INFO | ingest | Provenance manifest → /home/claude/ghgrp_real/data/interim/provenance.json
+2026-05-24 16:15:41 | WARNING | ingest | 2 source(s) unavailable: ['epa', 'noaa']
+2026-05-24 16:15:41 | INFO | analyze | ================================================================
+2026-05-24 16:15:41 | INFO | analyze | ANALYSIS — real data only; analyses gated on available columns
+2026-05-24 16:15:41 | INFO | analyze | ================================================================
+2026-05-24 16:15:41 | INFO | analyze | Loaded owid_us: (64, 79)
+2026-05-24 16:15:41 | INFO | analyze | OWID CO2: latest 4918.4 Mt (1960–2023), peak 6126.9 Mt in 2005
+2026-05-24 16:15:41 | INFO | analyze | OWID trend: Spearman rho=0.765 (p=0.0000), linear slope=35.4 Mt/yr
+2026-05-24 16:15:41 | WARNING | analyze | No EPA GHGRP panel (source was unreachable at ingest); skipping EPA trend/forecast
+2026-05-24 16:15:41 | INFO | analyze | Analysis results → /home/claude/ghgrp_real/outputs/tables/analysis_results.json
+2026-05-24 16:15:41 | INFO | pipeline | Done in 15.9s. See data/interim/provenance.json for source provenance.
+2026-05-24 16:23:21 | INFO | pipeline | ================================================================
+2026-05-24 16:23:21 | INFO | pipeline | GHGRP REAL-DATA PIPELINE v2.0.0
+2026-05-24 16:23:21 | INFO | pipeline | Steps: ['ingest', 'analyze']
+2026-05-24 16:23:21 | INFO | pipeline | ================================================================
+2026-05-24 16:23:21 | INFO | ingest | ================================================================
+2026-05-24 16:23:21 | INFO | ingest | REAL-DATA INGESTION — live sources only, no fabricated values
+2026-05-24 16:23:21 | INFO | ingest | ================================================================
+2026-05-24 16:23:24 | INFO | ingest | OWID ✓ (64 US rows)
+2026-05-24 16:23:43 | ERROR | ingest | EPA GHGRP failed (expected in restricted sandbox): [EPA GHGRP] all access methods failed. No fabricated fallback. Errors: ['[EPA GHGRP] could not fetch https://www.epa.gov/system/files/other-files/2024-10/2023_data_summary_spreadsheets.zip after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://www.epa.gov/system/files/other-files/2024-10/2023_data_summary_spreadsheets.zip. This source must be reachable; no fabricated fallback is used.', '[EPA GHGRP] could not fetch https://data.epa.gov/efservice/PUB_DIM_FACILITY/0:9999/CSV after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://data.epa.gov/efservice/PUB_DIM_FACILITY/0:9999/CSV. This source must be reachable; no fabricated fallback is used.']
+2026-05-24 16:23:43 | ERROR | ingest | EIA failed: [EIA Open Data API v2] no API key. Set EIA_API_KEY env var or config.data.eia.api_key. Register free at https://www.eia.gov/opendata/register.php. No fabricated fallback is used.
+2026-05-24 16:23:43 | INFO | ingest | Provenance manifest → /home/claude/ghgrp_real/data/interim/provenance.json
+2026-05-24 16:23:43 | WARNING | ingest | 2 source(s) unavailable: ['epa', 'eia']
+2026-05-24 16:23:43 | INFO | analyze | ================================================================
+2026-05-24 16:23:43 | INFO | analyze | ANALYSIS — real data only; analyses gated on available columns
+2026-05-24 16:23:43 | INFO | analyze | ================================================================
+2026-05-24 16:23:43 | INFO | analyze | Loaded owid_us: (64, 79)
+2026-05-24 16:23:43 | INFO | analyze | OWID CO2: latest 4918.4 Mt (1960–2023), peak 6126.9 Mt in 2005
+2026-05-24 16:23:43 | INFO | analyze | OWID trend: Spearman rho=0.765 (p=0.0000), linear slope=35.4 Mt/yr
+2026-05-24 16:23:43 | WARNING | analyze | No EPA GHGRP panel (source was unreachable at ingest); skipping EPA trend/forecast
+2026-05-24 16:23:43 | INFO | analyze | Analysis results → /home/claude/ghgrp_real/outputs/tables/analysis_results.json
+2026-05-24 16:23:43 | INFO | pipeline | Done in 22.4s. See data/interim/provenance.json for source provenance.
+2026-05-24 16:24:44 | INFO | pipeline | Probing real data sources for reachability...
+2026-05-24 16:24:45 | INFO | pipeline |   owid : HTTP 200 — reachable
+2026-05-24 16:24:45 | INFO | pipeline |   epa  : HTTP 403 — NOT reachable
+2026-05-24 16:24:45 | INFO | pipeline |   eia  : HTTP 403 — NOT reachable
+2026-05-24 16:24:46 | INFO | pipeline |   noaa : HTTP 403 — NOT reachable
+2026-05-25 00:05:16 | INFO | pipeline | Probing real data sources for reachability...
+2026-05-25 00:05:17 | INFO | pipeline |   owid : HTTP 200 — reachable
+2026-05-25 00:05:33 | INFO | pipeline |   epa  : HTTP 200 — reachable
+2026-05-25 00:05:34 | INFO | pipeline |   eia  : HTTP 403 — NOT reachable
+2026-05-25 00:05:34 | INFO | pipeline |   noaa : HTTP 200 — reachable
+2026-05-25 17:35:22 | INFO | pipeline | ================================================================
+2026-05-25 17:35:22 | INFO | pipeline | GHGRP REAL-DATA PIPELINE v2.0.0
+2026-05-25 17:35:22 | INFO | pipeline | Steps: ['ingest', 'analyze']
+2026-05-25 17:35:22 | INFO | pipeline | ================================================================
+2026-05-25 17:35:22 | INFO | ingest | ================================================================
+2026-05-25 17:35:22 | INFO | ingest | REAL-DATA INGESTION — live sources only, no fabricated values
+2026-05-25 17:35:22 | INFO | ingest | ================================================================
+2026-05-25 17:35:24 | INFO | ingest | OWID ✓ (64 US rows)
+2026-05-25 17:37:39 | ERROR | ingest | EPA GHGRP failed (expected in restricted sandbox): [EPA GHGRP] all access methods failed. No fabricated fallback. Errors: ["[EPA GHGRP] could not parse a year/emissions panel from workbook sheets: ['Direct Emitters', 'Suppliers', 'Industry Type', 'FAQs about this Data']", '[EPA GHGRP] could not fetch https://data.epa.gov/efservice/PUB_DIM_FACILITY/150000:159999/CSV after 3 attempts. Last error: 500 Server Error: INTERNAL SERVER ERROR for url: https://data.epa.gov/efservice/PUB_DIM_FACILITY/150000:159999/CSV. This source must be reachable; no fabricated fallback is used.']

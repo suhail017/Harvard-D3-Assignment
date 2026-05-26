@@ -1,0 +1,20 @@
+{
+  "sources_used": [
+    {
+      "source_name": "Our World in Data (CO2)",
+      "source_url": "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv",
+      "retrieved_at": "2026-05-24 16:23:24 UTC"
+    }
+  ],
+  "sources_failed": [
+    {
+      "source": "epa",
+      "error": "[EPA GHGRP] all access methods failed. No fabricated fallback. Errors: ['[EPA GHGRP] could not fetch https://www.epa.gov/system/files/other-files/2024-10/2023_data_summary_spreadsheets.zip after 3 attempts. Last error: 403 Client Error: Forbidden for url: https://www.epa.gov/system/files/other-files"
+    },
+    {
+      "source": "eia",
+      "error": "[EIA Open Data API v2] no API key. Set EIA_API_KEY env var or config.data.eia.api_key. Register free at https://www.eia.gov/opendata/register.php. No fabricated fallback is used."
+    }
+  ],
+  "note": "No fabricated data is used anywhere. Failed sources are recorded here and simply absent from the panel."
+}

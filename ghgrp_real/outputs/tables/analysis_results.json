@@ -1,0 +1,27 @@
+{
+  "note": "All results derived solely from real fetched data. Analyses absent below mean the required real source was not reachable at ingest time.",
+  "owid": {
+    "series": "OWID U.S. total CO2 (Mt)",
+    "n_years": 64,
+    "year_range": [
+      1960,
+      2023
+    ],
+    "latest_value_mt": 4918.4,
+    "peak_year": 2005,
+    "peak_value_mt": 6126.9,
+    "adf_stat": -2.5764,
+    "adf_pvalue": 0.098,
+    "spearman_rho": 0.7647,
+    "spearman_pvalue": 0.0,
+    "linear_slope_mt_per_yr": 35.39,
+    "linear_r2": 0.6047,
+    "carbon_intensity_change": {
+      "from_year": 1960,
+      "to_year": 2022,
+      "co2_per_gdp_first": 0.888,
+      "co2_per_gdp_last": 0.259,
+      "pct_change": -70.8
+    }
+  }
+}

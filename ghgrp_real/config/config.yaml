@@ -1,0 +1,64 @@
+# ============================================================
+# GHGRP Real-Data Pipeline — Configuration
+# Every value here points to a REAL public source.
+# No fabricated data anywhere in this pipeline.
+# ============================================================
+
+project:
+  name: "ghgrp_real_pipeline"
+  version: "2.0.0"
+  random_seed: 42
+
+# ── Which sources to activate ────────────────────────────────
+# Active set per user choice: EPA + OWID + EIA.
+# owid + epa need no key. eia needs a free key. noaa is available but off.
+sources:
+  owid: true       # live download from GitHub (works everywhere)
+  epa:  true       # EPA GHGRP: bulk ZIP (primary) + Envirofacts REST (fallback)
+  eia:  true       # EIA API v2 — REQUIRES a free key (see data.eia.api_key)
+  noaa: false      # available but disabled per user choice (set true to enable)
+
+data:
+  years: [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
+          2018, 2019, 2020, 2021, 2022, 2023]
+
+  owid:
+    url: "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv"
+    country: "United States"
+    year_min: 1960
+    year_max: 2023
+
+  epa:
+    # PRIMARY: bulk "Data Summary Spreadsheets" ZIP — a single curated multi-year
+    # file EPA publishes as the authoritative high-level summary. Most reliable
+    # for national/sector/state totals; no paging, stable schema.
+    # The dated path changes each annual release; the connector resolves the
+    # current link from the Data Sets page, with this known-good default.
+    data_sets_page: "https://www.epa.gov/ghgreporting/data-sets"
+    summary_zip_url: "https://www.epa.gov/system/files/other-files/2024-10/2023_data_summary_spreadsheets.zip"
+    # FALLBACK: Envirofacts REST API (facility-level, programmatic, paged).
+    base_url: "https://data.epa.gov/efservice"
+    facility_table: "PUB_DIM_FACILITY"
+    page_size: 10000
+    prefer: "zip"   # "zip" = try bulk ZIP first then API; "api" = API first
+
+  eia:
+    base_url: "https://api.eia.gov/v2"
+    # Provide your free key here OR set the EIA_API_KEY environment variable.
+    # Register: https://www.eia.gov/opendata/register.php
+    api_key: ""
+
+  noaa:
+    base_url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance"
+    year_min: 2010
+    year_max: 2023
+
+http:
+  timeout_seconds: 60
+  max_retries: 3
+  backoff_base: 2.0
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+  file: "logs/pipeline.log"
