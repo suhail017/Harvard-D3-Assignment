@@ -1,0 +1,3155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U.S. Greenhouse Gas Reporting Program — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2d3148;
+    --accent: #4f9cf9;
+    --accent2: #f97316;
+    --accent3: #22c55e;
+    --accent4: #a855f7;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --red: #ef4444;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  header .logo {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  header p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  .year-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    align-items: center;
+  }
+  .year-bar span { color: var(--muted); font-size: 12px; margin-right: 4px; }
+  .year-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font);
+    transition: all .15s;
+  }
+  .year-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .year-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .kpi-card.blue::before { background: var(--accent); }
+  .kpi-card.orange::before { background: var(--accent2); }
+  .kpi-card.green::before { background: var(--accent3); }
+  .kpi-card.purple::before { background: var(--accent4); }
+
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .kpi-value { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
+  .kpi-unit { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .kpi-delta { font-size: 12px; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .kpi-delta.down { color: var(--accent3); }
+  .kpi-delta.up { color: var(--red); }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .charts-grid.three { grid-template-columns: 2fr 1fr; }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .chart-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .chart-wrap { position: relative; }
+
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 9px 10px; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 11px; font-weight: 700;
+  }
+  .rank-badge.r1 { background: #fbbf24; color: #000; }
+  .rank-badge.r2 { background: #94a3b8; color: #000; }
+  .rank-badge.r3 { background: #f97316; color: #fff; }
+  .rank-badge.rn { background: var(--surface2); color: var(--muted); }
+
+  .state-bar-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px; font-size: 12px;
+  }
+  .state-label { width: 26px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+  .state-bar-bg { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .state-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width .4s ease; }
+  .state-value { width: 60px; text-align: right; color: var(--text); flex-shrink: 0; }
+
+  .sector-chip {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--surface2);
+    color: var(--muted);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 900px) {
+    .charts-grid, .charts-grid.three, .bottom-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🌿</div>
+  <div>
+    <h1>U.S. Greenhouse Gas Reporting Program</h1>
+    <p>EPA GHGRP · Direct Point Emitters · 2010 – 2023 · Emissions in MMtCO₂e</p>
+  </div>
+</header>
+
+<div class="year-bar">
+  <span>Year:</span>
+  <!-- populated by JS -->
+</div>
+
+<!-- KPI Row -->
+<div class="kpi-grid">
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total GHG Emissions</div>
+    <div class="kpi-value" id="kpi-total">—</div>
+    <div class="kpi-unit">MMtCO₂e</div>
+    <div class="kpi-delta" id="kpi-total-delta"></div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="kpi-label">Power Sector Emissions</div>
+    <div class="kpi-value" id="kpi-power">—</div>
+    <div class="kpi-unit">MMtCO₂e</div>
+    <div class="kpi-delta" id="kpi-power-delta"></div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">Reporting Facilities</div>
+    <div class="kpi-value" id="kpi-fac">—</div>
+    <div class="kpi-unit">facilities</div>
+    <div class="kpi-delta" id="kpi-fac-delta"></div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">Power Share of Total</div>
+    <div class="kpi-value" id="kpi-share">—</div>
+    <div class="kpi-unit">% of reported emissions</div>
+  </div>
+</div>
+
+<!-- Trend Charts -->
+<div class="charts-grid" style="margin-bottom:16px">
+  <div class="chart-card">
+    <div class="chart-title">Total GHG Emissions Over Time</div>
+    <div class="chart-sub">Total and power sector emissions, all reporting facilities</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="trendChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Reporting Facilities</div>
+    <div class="chart-sub">Number of facilities submitting annual reports</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="facChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Sector + State -->
+<div class="charts-grid three" style="margin-bottom:16px">
+  <div class="chart-card">
+    <div class="chart-title">Sector-wise Emissions</div>
+    <div class="chart-sub" id="sector-sub">Primary sectors for selected year</div>
+    <div class="chart-wrap" style="height:260px"><canvas id="sectorChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Top States by Emissions</div>
+    <div class="chart-sub" id="state-sub">Top 15 states</div>
+    <div id="stateList" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- Top 10 + Sector Donut -->
+<div class="bottom-grid">
+  <div class="chart-card">
+    <div class="chart-title">Top 10 Emitters</div>
+    <div class="chart-sub" id="top10-sub">Largest individual reporting facilities</div>
+    <table>
+      <thead><tr>
+        <th>#</th>
+        <th>Facility</th>
+        <th>State</th>
+        <th style="text-align:right">MMtCO₂e</th>
+      </tr></thead>
+      <tbody id="top10Body"></tbody>
+    </table>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Sector Mix</div>
+    <div class="chart-sub" id="donut-sub">Share of total emissions by primary sector</div>
+    <div class="chart-wrap" style="height:290px"><canvas id="donutChart"></canvas></div>
+  </div>
+</div>
+
+<script>
+const RAW = {
+  "2010": {
+    "total_mmtco2e": 3196.5717,
+    "power_mmtco2e": 2232.6843,
+    "n_facilities": 6297,
+    "sectors": {
+      "Power Plants": 2295.2124,
+      "Waste": 110.9069,
+      "Chemicals": 104.1131,
+      "Minerals": 100.9733,
+      "Metals": 90.7911,
+      "Other": 81.0064,
+      "Petroleum and Natural Gas Systems": 65.4536,
+      "Petroleum Product Suppliers,Refineries": 50.7969,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 49.9526,
+      "Pulp and Paper": 43.8221,
+      "Chemicals,Suppliers of CO2": 28.3079,
+      "Refineries": 27.7217,
+      "Chemicals,Refineries,Suppliers of CO2": 21.561,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 16.5065,
+      "Chemicals,Refineries": 15.2977,
+      "Power Plants,Suppliers of CO2": 12.131,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 10.4668,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 10.2719,
+      "Chemicals,Industrial Gas Suppliers": 8.793,
+      "Other,Suppliers of CO2": 8.1576,
+      "Metals,Minerals": 7.9868,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.6273,
+      "Metals,Power Plants": 6.7667,
+      "Power Plants,Waste": 6.6818,
+      "Chemicals,Power Plants": 5.04,
+      "Chemicals,Petroleum Product Suppliers": 3.9672,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 3.0012,
+      "Pulp and Paper,Suppliers of CO2": 2.4052,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.5785,
+      "Industrial Gas Suppliers,Other": 0.1067,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.0497,
+      "Chemicals,Natural Gas and Natural Gas Liquids Suppliers": 0.0471,
+      "Industrial Gas Suppliers,Minerals": 0.0445,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0236,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.0021
+    },
+    "top10": [
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 22.985,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bowen",
+        "state": "GA",
+        "emissions_mmtco2e": 21.032,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 20.7579,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 18.6984,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 17.9981,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 17.855,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 17.3695,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Colstrip",
+        "state": "MT",
+        "emissions_mmtco2e": 17.1247,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 16.8772,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Rockport",
+        "state": "IN",
+        "emissions_mmtco2e": 16.6703,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 386.9378,
+      "IN": 162.6826,
+      "OH": 156.7447,
+      "PA": 152.9257,
+      "FL": 146.5247,
+      "IL": 134.2269,
+      "LA": 131.6409,
+      "KY": 114.207,
+      "CA": 110.2002,
+      "AL": 101.8584,
+      "MI": 99.2871,
+      "GA": 96.1538,
+      "MO": 92.0316,
+      "NC": 80.8478,
+      "WV": 79.464,
+      "OK": 69.1182,
+      "IA": 62.0278,
+      "AZ": 61.2289,
+      "WY": 59.9445,
+      "TN": 57.3192,
+      "WI": 56.0841,
+      "NY": 51.3651,
+      "SC": 50.9439,
+      "CO": 50.5868,
+      "KS": 48.9461,
+      "VA": 47.4167,
+      "MN": 46.9339,
+      "AR": 41.9392,
+      "UT": 41.5401,
+      "MS": 39.6199,
+      "ND": 37.7156,
+      "NM": 35.7317,
+      "MD": 33.7424,
+      "NE": 31.0881,
+      "NJ": 26.6761,
+      "WA": 25.805,
+      "MT": 25.2208,
+      "MA": 21.6672,
+      "NV": 20.058,
+      "PR": 18.9172,
+      "AK": 17.5448,
+      "OR": 13.697,
+      "CT": 10.3071,
+      "HI": 9.5781,
+      "VI": 6.3271,
+      "SD": 6.1146,
+      "NH": 6.0176,
+      "ME": 5.8849,
+      "DE": 4.7508,
+      "RI": 3.643,
+      "ID": 3.1976,
+      "GU": 1.271,
+      "DC": 0.5797,
+      "VT": 0.2889
+    }
+  },
+  "2011": {
+    "total_mmtco2e": 3207.583,
+    "power_mmtco2e": 2135.4408,
+    "n_facilities": 6907,
+    "sectors": {
+      "Power Plants": 2136.8569,
+      "Other": 106.9059,
+      "Waste": 104.5974,
+      "Minerals": 100.5043,
+      "Petroleum and Natural Gas Systems": 94.2078,
+      "Chemicals": 83.9323,
+      "Metals": 82.6427,
+      "Petroleum Product Suppliers,Refineries": 58.9239,
+      "Power Plants,Waste": 46.1094,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 45.8206,
+      "Pulp and Paper,Waste": 30.3529,
+      "Chemicals,Suppliers of CO2": 28.9866,
+      "Metals,Waste": 22.2079,
+      "Chemicals,Waste": 21.37,
+      "Other,Waste": 19.4014,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 18.9705,
+      "Refineries": 17.1702,
+      "Pulp and Paper": 16.8847,
+      "Chemicals,Refineries,Suppliers of CO2": 16.0069,
+      "Chemicals,Refineries": 13.438,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 13.0558,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 10.9958,
+      "Chemicals,Industrial Gas Suppliers": 10.5129,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 8.3328,
+      "Other,Power Plants": 8.0815,
+      "Metals,Minerals": 7.3032,
+      "Power Plants,Refineries": 7.0794,
+      "Other,Suppliers of CO2,Waste": 6.9615,
+      "Metals,Power Plants": 6.8754,
+      "Chemicals,Industrial Gas Suppliers,Waste": 6.8372,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 5.875,
+      "Petroleum and Natural Gas Systems,Power Plants": 5.0844,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 4.9424,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.7109,
+      "Chemicals,Refineries,Waste": 3.846,
+      "Chemicals,Petroleum Product Suppliers": 3.8023,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 3.3991,
+      "Power Plants,Suppliers of CO2": 3.0924,
+      "Minerals,Waste": 3.0199,
+      "Chemicals,Power Plants": 2.957,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.5085,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.2841,
+      "Chemicals,Power Plants,Refineries,Suppliers of CO2": 2.2552,
+      "Chemicals,Power Plants,Waste": 2.1151,
+      "Other,Suppliers of CO2": 1.6844,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 1.0453,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.8808,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.7867,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.4234,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.4166,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.3662,
+      "Pulp and Paper,Suppliers of CO2": 0.259,
+      "Petroleum Product Suppliers,Pulp and Paper,Waste": 0.1959,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.1001,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0861,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0737,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0238,
+      "Industrial Gas Suppliers,Other": 0.0192,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 0.0037
+    },
+    "top10": [
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 22.0736,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 22.0672,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 18.4453,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 18.2341,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 17.731,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 17.6551,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 16.9358,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bruce Mansfield",
+        "state": "PA",
+        "emissions_mmtco2e": 16.276,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.9403,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 15.8272,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 407.2029,
+      "IN": 164.9052,
+      "PA": 152.7559,
+      "OH": 149.4535,
+      "LA": 144.5635,
+      "FL": 140.7403,
+      "IL": 136.6286,
+      "KY": 121.8,
+      "AL": 111.1707,
+      "CA": 103.3185,
+      "MO": 95.1521,
+      "MI": 93.9889,
+      "WV": 91.0683,
+      "GA": 87.022,
+      "OK": 72.0517,
+      "NC": 71.3596,
+      "WY": 64.5326,
+      "AZ": 59.7847,
+      "IA": 59.7342,
+      "TN": 56.1677,
+      "WI": 55.4586,
+      "CO": 54.3172,
+      "KS": 48.6378,
+      "SC": 48.2045,
+      "MN": 47.2213,
+      "NY": 47.0264,
+      "AR": 46.2501,
+      "VA": 45.6298,
+      "UT": 42.8047,
+      "NM": 40.825,
+      "ND": 37.1373,
+      "MS": 35.8419,
+      "NE": 33.4463,
+      "MD": 30.8489,
+      "NJ": 25.4009,
+      "MT": 21.8889,
+      "WA": 20.6197,
+      "PR": 19.4321,
+      "AK": 18.7898,
+      "MA": 18.0354,
+      "NV": 17.9615,
+      "OR": 10.6203,
+      "HI": 9.7945,
+      "CT": 8.833,
+      "DE": 6.776,
+      "ME": 5.8743,
+      "NH": 5.6812,
+      "SD": 5.553,
+      "VI": 5.4924,
+      "RI": 3.9031,
+      "ID": 3.4374,
+      "GU": 1.3189,
+      "VT": 0.6629,
+      "DC": 0.4568
+    }
+  },
+  "2012": {
+    "total_mmtco2e": 3058.0758,
+    "power_mmtco2e": 2006.7622,
+    "n_facilities": 7102,
+    "sectors": {
+      "Power Plants": 1995.0411,
+      "Waste": 105.3458,
+      "Minerals": 104.8909,
+      "Other": 104.6575,
+      "Petroleum and Natural Gas Systems": 96.1645,
+      "Chemicals": 80.3461,
+      "Metals": 78.0895,
+      "Petroleum Product Suppliers,Refineries": 61.8227,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 51.4016,
+      "Power Plants,Waste": 47.4824,
+      "Pulp and Paper,Waste": 29.1652,
+      "Chemicals,Suppliers of CO2": 28.7963,
+      "Metals,Waste": 22.1402,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 19.2728,
+      "Other,Waste": 17.2346,
+      "Pulp and Paper": 16.384,
+      "Chemicals,Waste": 15.8053,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 13.1673,
+      "Chemicals,Refineries": 13.1494,
+      "Power Plants,Suppliers of CO2": 12.1401,
+      "Chemicals,Refineries,Suppliers of CO2": 11.8157,
+      "Chemicals,Industrial Gas Suppliers": 10.2279,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 7.9776,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.2765,
+      "Refineries": 6.8051,
+      "Metals,Minerals": 6.7833,
+      "Metals,Power Plants": 6.5282,
+      "Other,Power Plants": 6.5005,
+      "Other,Suppliers of CO2,Waste": 6.4186,
+      "Petroleum and Natural Gas Systems,Power Plants": 5.9907,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.9331,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 5.4652,
+      "Chemicals,Petroleum Product Suppliers": 5.3358,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 5.2941,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.7683,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.7146,
+      "Chemicals,Industrial Gas Suppliers,Waste": 4.2206,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 4.0265,
+      "Chemicals,Refineries,Waste": 3.9553,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 3.8186,
+      "Minerals,Waste": 3.2065,
+      "Chemicals,Power Plants": 2.9912,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 2.8583,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.3505,
+      "Chemicals,Power Plants,Waste": 2.1387,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.0687,
+      "Other,Suppliers of CO2": 1.6022,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.8507,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.6133,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.5583,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.5268,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.477,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.3724,
+      "Pulp and Paper,Suppliers of CO2": 0.2611,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2485,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.1797,
+      "Petroleum Product Suppliers,Pulp and Paper,Waste": 0.1714,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.0969,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0732,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0562,
+      "Industrial Gas Suppliers,Other": 0.0171,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0034
+    },
+    "top10": [
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 21.8156,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 18.557,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Rockport",
+        "state": "IN",
+        "emissions_mmtco2e": 17.8947,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 16.9049,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 16.6387,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bruce Mansfield",
+        "state": "PA",
+        "emissions_mmtco2e": 16.2688,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 15.5466,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 15.4789,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.2168,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Paradise",
+        "state": "KY",
+        "emissions_mmtco2e": 14.9303,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 393.5365,
+      "IN": 154.618,
+      "PA": 143.0876,
+      "LA": 140.6713,
+      "OH": 133.6211,
+      "FL": 133.001,
+      "IL": 129.9598,
+      "CA": 114.4871,
+      "KY": 110.9899,
+      "AL": 102.9462,
+      "MI": 92.1585,
+      "MO": 88.6725,
+      "WV": 85.6013,
+      "GA": 74.958,
+      "OK": 70.9345,
+      "WY": 67.1628,
+      "NC": 66.8164,
+      "AZ": 59.5727,
+      "IA": 56.5184,
+      "TN": 54.0044,
+      "CO": 53.7992,
+      "WI": 49.8046,
+      "AR": 47.2979,
+      "NY": 45.8257,
+      "KS": 45.015,
+      "SC": 43.7887,
+      "MN": 42.5302,
+      "VA": 42.1669,
+      "UT": 41.1927,
+      "NM": 39.7779,
+      "ND": 38.4213,
+      "MS": 36.6647,
+      "NE": 32.1406,
+      "MD": 24.8724,
+      "NJ": 24.277,
+      "MT": 21.1508,
+      "AK": 19.0331,
+      "WA": 19.0021,
+      "PR": 18.355,
+      "NV": 18.2142,
+      "MA": 15.6889,
+      "OR": 11.324,
+      "HI": 9.4861,
+      "DE": 9.1625,
+      "CT": 9.0395,
+      "SD": 5.6374,
+      "ME": 5.1886,
+      "NH": 4.8112,
+      "RI": 3.8357,
+      "ID": 3.7159,
+      "VI": 1.5798,
+      "GU": 1.0657,
+      "VT": 0.6119,
+      "DC": 0.2806
+    }
+  },
+  "2013": {
+    "total_mmtco2e": 3073.2139,
+    "power_mmtco2e": 2027.8441,
+    "n_facilities": 7191,
+    "sectors": {
+      "Power Plants": 2006.4855,
+      "Minerals": 108.3961,
+      "Other": 106.5807,
+      "Waste": 102.0744,
+      "Petroleum and Natural Gas Systems": 93.7542,
+      "Chemicals": 85.4069,
+      "Metals": 77.1117,
+      "Petroleum Product Suppliers,Refineries": 63.3321,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 58.4006,
+      "Power Plants,Waste": 44.0753,
+      "Chemicals,Suppliers of CO2": 31.8968,
+      "Pulp and Paper,Waste": 27.0833,
+      "Metals,Waste": 22.6252,
+      "Other,Waste": 17.2969,
+      "Chemicals,Refineries,Suppliers of CO2": 16.5401,
+      "Other,Power Plants": 16.3079,
+      "Pulp and Paper": 15.0997,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 14.9288,
+      "Chemicals,Waste": 14.3362,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 13.2644,
+      "Power Plants,Suppliers of CO2": 12.1878,
+      "Chemicals,Industrial Gas Suppliers": 8.2545,
+      "Metals,Minerals": 7.3874,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.2969,
+      "Metals,Power Plants": 6.6088,
+      "Refineries": 6.5655,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 6.4147,
+      "Chemicals,Refineries": 6.0812,
+      "Other,Suppliers of CO2,Waste": 6.0451,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 5.3714,
+      "Petroleum and Natural Gas Systems,Power Plants": 5.3189,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 5.1801,
+      "Chemicals,Industrial Gas Suppliers,Waste": 5.14,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.7206,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.1997,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.1227,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 3.9164,
+      "Chemicals,Refineries,Waste": 3.8268,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.7036,
+      "Minerals,Waste": 3.3991,
+      "Chemicals,Power Plants": 3.0538,
+      "Chemicals,Petroleum Product Suppliers": 2.2854,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.2676,
+      "Chemicals,Power Plants,Waste": 2.2304,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.1888,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 2.1239,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.9522,
+      "Other,Suppliers of CO2": 1.7881,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 1.1646,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.782,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.594,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.5012,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.3473,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.2932,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2559,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.2158,
+      "Pulp and Paper,Suppliers of CO2": 0.1875,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.1098,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0647,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0521,
+      "Industrial Gas Suppliers,Other": 0.015,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0026
+    },
+    "top10": [
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 22.2933,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 21.8707,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 16.2958,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bruce Mansfield",
+        "state": "PA",
+        "emissions_mmtco2e": 16.1587,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 16.1287,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 15.9741,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 15.7964,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.4529,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 15.3302,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Rockport",
+        "state": "IN",
+        "emissions_mmtco2e": 14.7969,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 405.4265,
+      "IN": 155.5616,
+      "PA": 144.8529,
+      "OH": 137.393,
+      "LA": 136.9499,
+      "IL": 133.7403,
+      "FL": 128.9421,
+      "CA": 114.4351,
+      "KY": 109.9389,
+      "AL": 101.8979,
+      "MI": 91.5682,
+      "MO": 89.7857,
+      "WV": 88.0838,
+      "GA": 73.4411,
+      "OK": 68.7795,
+      "WY": 67.4939,
+      "NC": 65.1637,
+      "AZ": 61.9953,
+      "WI": 55.5542,
+      "IA": 54.4134,
+      "CO": 52.4066,
+      "TN": 50.351,
+      "VA": 47.4057,
+      "AR": 47.0492,
+      "KS": 46.2885,
+      "UT": 44.4151,
+      "MN": 43.1809,
+      "NY": 42.9739,
+      "NM": 40.2662,
+      "SC": 38.1468,
+      "ND": 36.7932,
+      "MS": 35.9104,
+      "NE": 33.7459,
+      "WA": 25.1534,
+      "NJ": 23.5604,
+      "MD": 22.9751,
+      "MT": 21.8631,
+      "NV": 19.1356,
+      "AK": 18.7834,
+      "PR": 16.7974,
+      "MA": 16.1704,
+      "OR": 13.3217,
+      "CT": 9.0283,
+      "HI": 8.8723,
+      "DE": 8.2377,
+      "SD": 6.0005,
+      "ID": 4.7715,
+      "ME": 4.5697,
+      "NH": 3.9363,
+      "RI": 2.859,
+      "GU": 1.1138,
+      "VI": 0.9186,
+      "VT": 0.5311,
+      "DC": 0.2642
+    }
+  },
+  "2014": {
+    "total_mmtco2e": 3084.0688,
+    "power_mmtco2e": 2026.5373,
+    "n_facilities": 7349,
+    "sectors": {
+      "Power Plants": 1997.6603,
+      "Minerals": 113.9712,
+      "Other": 110.0528,
+      "Waste": 101.7572,
+      "Petroleum and Natural Gas Systems": 96.5403,
+      "Chemicals": 89.8679,
+      "Metals": 77.9632,
+      "Petroleum Product Suppliers,Refineries": 66.1648,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 56.0859,
+      "Power Plants,Waste": 47.18,
+      "Chemicals,Suppliers of CO2": 32.2837,
+      "Pulp and Paper,Waste": 25.8944,
+      "Metals,Waste": 21.2548,
+      "Other,Waste": 21.1012,
+      "Chemicals,Refineries,Suppliers of CO2": 18.6079,
+      "Pulp and Paper": 15.6888,
+      "Other,Power Plants": 15.1988,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 14.9113,
+      "Chemicals,Waste": 14.7766,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 14.0193,
+      "Power Plants,Suppliers of CO2": 11.9736,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 7.9475,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.2291,
+      "Refineries": 6.9001,
+      "Metals,Power Plants": 6.7777,
+      "Chemicals,Industrial Gas Suppliers": 5.9252,
+      "Chemicals,Industrial Gas Suppliers,Waste": 5.8239,
+      "Petroleum and Natural Gas Systems,Power Plants": 5.7701,
+      "Metals,Minerals": 5.4215,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 5.3656,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.333,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.7418,
+      "Chemicals,Refineries": 4.646,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.5934,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.3556,
+      "Chemicals,Refineries,Waste": 3.9929,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.9043,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 3.7996,
+      "Minerals,Waste": 3.3568,
+      "Other,Suppliers of CO2,Waste": 3.289,
+      "Chemicals,Power Plants": 2.8437,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.6576,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.4612,
+      "Chemicals,Petroleum Product Suppliers": 2.374,
+      "Chemicals,Power Plants,Waste": 2.2407,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 2.0251,
+      "Other,Suppliers of CO2": 1.8342,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 1.2464,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.9904,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.8242,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7157,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.6129,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.409,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.2201,
+      "Pulp and Paper,Suppliers of CO2": 0.1379,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.0989,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0948,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0737,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0663,
+      "Industrial Gas Suppliers,Other": 0.0146,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0003
+    },
+    "top10": [
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 20.4825,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 19.9027,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 17.2484,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 16.2947,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 16.1302,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Rockport",
+        "state": "IN",
+        "emissions_mmtco2e": 15.8035,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bowen",
+        "state": "GA",
+        "emissions_mmtco2e": 15.6423,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bruce Mansfield",
+        "state": "PA",
+        "emissions_mmtco2e": 15.6389,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 15.5736,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.1437,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 406.9724,
+      "IN": 159.7402,
+      "LA": 137.4121,
+      "OH": 137.3888,
+      "PA": 136.898,
+      "FL": 134.7038,
+      "IL": 131.4537,
+      "CA": 116.3848,
+      "KY": 110.4775,
+      "AL": 104.0828,
+      "WV": 94.859,
+      "MI": 87.9098,
+      "MO": 86.6028,
+      "GA": 78.8602,
+      "OK": 67.0903,
+      "NC": 67.0875,
+      "WY": 62.9188,
+      "AZ": 61.7975,
+      "IA": 54.8546,
+      "TN": 53.1416,
+      "WI": 52.1878,
+      "CO": 52.0623,
+      "MN": 47.036,
+      "AR": 46.9602,
+      "VA": 46.226,
+      "KS": 45.6499,
+      "UT": 43.5428,
+      "NY": 43.282,
+      "SC": 42.7234,
+      "MS": 37.8306,
+      "ND": 36.4751,
+      "NM": 36.3988,
+      "NE": 32.2445,
+      "NJ": 26.1029,
+      "MD": 25.4015,
+      "WA": 24.9093,
+      "MT": 22.522,
+      "NV": 19.6763,
+      "AK": 18.1902,
+      "PR": 16.3427,
+      "MA": 14.3347,
+      "OR": 12.5399,
+      "HI": 9.0431,
+      "CT": 8.9393,
+      "DE": 8.155,
+      "SD": 6.1859,
+      "ME": 4.7254,
+      "ID": 4.2176,
+      "NH": 3.7963,
+      "RI": 2.828,
+      "GU": 1.2485,
+      "VI": 0.8658,
+      "VT": 0.5006,
+      "DC": 0.2879
+    }
+  },
+  "2015": {
+    "total_mmtco2e": 2939.4436,
+    "power_mmtco2e": 1899.4457,
+    "n_facilities": 7242,
+    "sectors": {
+      "Power Plants": 1874.0879,
+      "Minerals": 112.487,
+      "Other": 111.5122,
+      "Waste": 100.8236,
+      "Petroleum and Natural Gas Systems": 98.1992,
+      "Chemicals": 93.3029,
+      "Metals": 69.7259,
+      "Petroleum Product Suppliers,Refineries": 66.4021,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 60.2693,
+      "Power Plants,Waste": 41.5457,
+      "Chemicals,Suppliers of CO2": 32.3336,
+      "Pulp and Paper,Waste": 25.0617,
+      "Other,Waste": 19.3757,
+      "Chemicals,Refineries,Suppliers of CO2": 18.1208,
+      "Chemicals,Waste": 17.912,
+      "Other,Power Plants": 16.5741,
+      "Pulp and Paper": 15.6159,
+      "Metals,Waste": 15.5368,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 14.616,
+      "Power Plants,Suppliers of CO2": 10.8756,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 8.6798,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 7.3635,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.1929,
+      "Metals,Power Plants": 6.8275,
+      "Refineries": 6.6994,
+      "Metals,Minerals": 6.2186,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.6866,
+      "Petroleum and Natural Gas Systems,Power Plants": 5.5333,
+      "Chemicals,Industrial Gas Suppliers": 5.3744,
+      "Chemicals,Refineries": 5.3315,
+      "Chemicals,Refineries,Waste": 4.9132,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.8295,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.5073,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.4389,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 4.1843,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 4.0382,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 3.5185,
+      "Minerals,Waste": 2.9268,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 2.8829,
+      "Chemicals,Power Plants": 2.7878,
+      "Other,Suppliers of CO2,Waste": 2.6606,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.6127,
+      "Chemicals,Petroleum Product Suppliers": 2.5533,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.4108,
+      "Chemicals,Power Plants,Waste": 2.3564,
+      "Other,Suppliers of CO2": 1.9354,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.884,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.8365,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.8359,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.7783,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.6554,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.5728,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.3284,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.214,
+      "Pulp and Paper,Suppliers of CO2": 0.1507,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0865,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.0838,
+      "Other,Petroleum and Natural Gas Systems": 0.0586,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0565,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0454,
+      "Industrial Gas Suppliers,Other": 0.0145,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 19.2471,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 17.9927,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Colstrip",
+        "state": "MT",
+        "emissions_mmtco2e": 15.973,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.484,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 15.397,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 14.7544,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 14.169,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 13.8232,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 13.4588,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Jim Bridger",
+        "state": "WY",
+        "emissions_mmtco2e": 13.2381,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 396.1135,
+      "IN": 141.4996,
+      "LA": 138.5552,
+      "FL": 132.6292,
+      "PA": 127.6867,
+      "OH": 120.2084,
+      "IL": 119.584,
+      "CA": 112.455,
+      "KY": 99.6841,
+      "AL": 98.2142,
+      "MI": 89.6687,
+      "WV": 88.358,
+      "MO": 80.1789,
+      "GA": 74.231,
+      "OK": 64.3439,
+      "WY": 63.2446,
+      "NC": 62.6821,
+      "AZ": 58.5106,
+      "WI": 53.7298,
+      "CO": 51.2537,
+      "IA": 50.2352,
+      "TN": 48.7015,
+      "VA": 46.6097,
+      "MN": 43.1672,
+      "NY": 42.3258,
+      "UT": 42.2786,
+      "KS": 40.9767,
+      "MS": 40.026,
+      "SC": 39.5831,
+      "ND": 39.1072,
+      "AR": 37.7374,
+      "NM": 36.3888,
+      "NE": 31.2257,
+      "NJ": 27.1935,
+      "WA": 23.6806,
+      "MT": 23.1158,
+      "MD": 22.5458,
+      "AK": 18.5325,
+      "NV": 18.1148,
+      "PR": 16.7873,
+      "MA": 14.7156,
+      "OR": 13.0887,
+      "CT": 9.6706,
+      "HI": 8.8998,
+      "DE": 8.0288,
+      "ID": 4.8833,
+      "SD": 4.842,
+      "ME": 4.0781,
+      "NH": 4.0193,
+      "RI": 3.1406,
+      "GU": 1.2715,
+      "VI": 0.8917,
+      "VT": 0.5034,
+      "DC": 0.2458
+    }
+  },
+  "2016": {
+    "total_mmtco2e": 2804.1446,
+    "power_mmtco2e": 1808.2898,
+    "n_facilities": 6572,
+    "sectors": {
+      "Power Plants": 1770.8011,
+      "Minerals": 108.2405,
+      "Other": 106.2438,
+      "Chemicals": 99.0045,
+      "Waste": 97.5802,
+      "Petroleum and Natural Gas Systems": 76.1986,
+      "Metals": 69.3287,
+      "Petroleum Product Suppliers,Refineries": 66.63,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 63.0076,
+      "Power Plants,Waste": 39.0971,
+      "Chemicals,Suppliers of CO2": 25.2827,
+      "Pulp and Paper,Waste": 25.1282,
+      "Power Plants,Suppliers of CO2": 24.3075,
+      "Chemicals,Waste": 19.6504,
+      "Chemicals,Refineries,Suppliers of CO2": 18.5536,
+      "Other,Waste": 18.4486,
+      "Other,Power Plants": 15.7115,
+      "Pulp and Paper": 14.3353,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 13.3825,
+      "Metals,Waste": 12.5324,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 9.855,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 7.5258,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.1952,
+      "Metals,Minerals": 6.8934,
+      "Other,Suppliers of CO2,Waste": 6.822,
+      "Refineries": 6.3966,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.9409,
+      "Chemicals,Refineries": 5.9115,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.8084,
+      "Chemicals,Refineries,Waste": 4.7477,
+      "Chemicals,Industrial Gas Suppliers": 4.7279,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.4905,
+      "Metals,Power Plants": 4.4573,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 4.1829,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 3.5455,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 3.5139,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 3.3265,
+      "Petroleum and Natural Gas Systems,Power Plants": 3.3148,
+      "Minerals,Waste": 2.9434,
+      "Chemicals,Power Plants": 2.6739,
+      "Chemicals,Petroleum Product Suppliers": 2.5567,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.5493,
+      "Chemicals,Power Plants,Waste": 2.4022,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.2952,
+      "Other,Suppliers of CO2": 1.7239,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.4731,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 1.4504,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.8943,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7205,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.5574,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.1881,
+      "Pulp and Paper,Suppliers of CO2": 0.168,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.0899,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0745,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.0614,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0556,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0502,
+      "Other,Petroleum and Natural Gas Systems": 0.0422,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0378,
+      "Industrial Gas Suppliers,Other": 0.0155,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0003
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 19.7331,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 17.657,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 15.4508,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bowen",
+        "state": "GA",
+        "emissions_mmtco2e": 15.4229,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Colstrip",
+        "state": "MT",
+        "emissions_mmtco2e": 14.3904,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 14.0072,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 13.9662,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "John E Amos",
+        "state": "WV",
+        "emissions_mmtco2e": 13.733,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 13.4344,
+        "sector": "Power Plants,Suppliers of CO2"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 13.2977,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 385.3298,
+      "LA": 139.3204,
+      "IN": 138.0025,
+      "FL": 133.9958,
+      "PA": 119.1769,
+      "OH": 115.5262,
+      "IL": 106.4112,
+      "CA": 97.7512,
+      "KY": 91.3259,
+      "WV": 89.643,
+      "AL": 89.5418,
+      "MI": 82.374,
+      "MO": 75.0845,
+      "GA": 74.9518,
+      "NC": 62.446,
+      "OK": 59.5481,
+      "WY": 57.5679,
+      "AZ": 52.7934,
+      "TN": 50.5268,
+      "WI": 50.1725,
+      "VA": 49.405,
+      "CO": 47.5267,
+      "IA": 46.1166,
+      "MN": 42.389,
+      "MS": 41.0518,
+      "KS": 39.3801,
+      "NY": 39.1397,
+      "AR": 39.006,
+      "ND": 38.5829,
+      "SC": 37.5879,
+      "UT": 36.1106,
+      "NM": 31.7174,
+      "NE": 28.8085,
+      "NJ": 28.1718,
+      "WA": 22.5263,
+      "MD": 22.4602,
+      "MT": 21.0793,
+      "NV": 17.4336,
+      "AK": 15.0038,
+      "PR": 14.5662,
+      "MA": 14.0083,
+      "OR": 12.079,
+      "CT": 9.1647,
+      "HI": 8.6698,
+      "DE": 8.3088,
+      "SD": 5.5782,
+      "ID": 4.5686,
+      "ME": 3.6842,
+      "NH": 2.8988,
+      "RI": 2.8759,
+      "GU": 1.1537,
+      "VI": 0.909,
+      "VT": 0.4537,
+      "DC": 0.2389
+    }
+  },
+  "2017": {
+    "total_mmtco2e": 2734.7227,
+    "power_mmtco2e": 1738.5293,
+    "n_facilities": 6488,
+    "sectors": {
+      "Power Plants": 1696.1361,
+      "Minerals": 111.5985,
+      "Other": 104.3609,
+      "Chemicals": 100.8827,
+      "Waste": 96.1819,
+      "Petroleum and Natural Gas Systems": 79.7453,
+      "Metals": 70.2838,
+      "Petroleum Product Suppliers,Refineries": 66.4969,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 62.3043,
+      "Power Plants,Waste": 36.4607,
+      "Chemicals,Suppliers of CO2": 27.7815,
+      "Power Plants,Suppliers of CO2": 25.3471,
+      "Pulp and Paper,Waste": 23.5724,
+      "Chemicals,Waste": 22.0088,
+      "Chemicals,Refineries,Suppliers of CO2": 18.6749,
+      "Other,Waste": 17.6716,
+      "Other,Power Plants": 15.4601,
+      "Pulp and Paper": 13.4229,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 12.9056,
+      "Metals,Waste": 12.169,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 9.6106,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.1158,
+      "Metals,Minerals": 6.9722,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 6.7889,
+      "Refineries": 6.4147,
+      "Chemicals,Refineries": 6.281,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.7877,
+      "Chemicals,Refineries,Waste": 4.9567,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.7221,
+      "Chemicals,Industrial Gas Suppliers": 4.6566,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.4905,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 4.3206,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.2758,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 3.8917,
+      "Petroleum and Natural Gas Systems,Power Plants": 3.5807,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.5748,
+      "Metals,Power Plants": 3.4672,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 3.2349,
+      "Minerals,Waste": 3.1483,
+      "Chemicals,Power Plants": 2.8945,
+      "Other,Suppliers of CO2,Waste": 2.5068,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.4446,
+      "Chemicals,Petroleum Product Suppliers": 2.3646,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.1731,
+      "Chemicals,Power Plants,Waste": 2.1597,
+      "Chemicals,Power Plants,Suppliers of CO2": 2.0296,
+      "Other,Suppliers of CO2": 1.7352,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.5124,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 1.4186,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7084,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.6109,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.3938,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.2352,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.1881,
+      "Pulp and Paper,Suppliers of CO2": 0.1791,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0926,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0789,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0756,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.075,
+      "Other,Petroleum and Natural Gas Systems": 0.046,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0315,
+      "Industrial Gas Suppliers,Other": 0.0124,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0004
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 20.7982,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 16.4638,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.5108,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 15.3662,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 15.295,
+        "sector": "Power Plants,Suppliers of CO2"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 15.2073,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 14.5352,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 14.1447,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 13.9372,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Colstrip",
+        "state": "MT",
+        "emissions_mmtco2e": 13.9346,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 388.5544,
+      "LA": 140.6357,
+      "IN": 135.6643,
+      "FL": 131.8477,
+      "OH": 115.6057,
+      "PA": 114.8861,
+      "IL": 101.376,
+      "CA": 93.9192,
+      "WV": 86.3403,
+      "AL": 85.0421,
+      "KY": 83.8532,
+      "MI": 81.4424,
+      "MO": 81.304,
+      "GA": 68.3015,
+      "WY": 60.3492,
+      "NC": 57.4529,
+      "OK": 54.6539,
+      "WI": 52.4718,
+      "AZ": 52.1594,
+      "IA": 50.2807,
+      "TN": 47.5025,
+      "CO": 46.4743,
+      "VA": 44.5768,
+      "MN": 42.5331,
+      "AR": 41.1023,
+      "MS": 39.5283,
+      "ND": 38.4993,
+      "UT": 35.7347,
+      "KS": 35.372,
+      "SC": 34.1202,
+      "NY": 33.7813,
+      "NM": 31.4495,
+      "NE": 29.0858,
+      "NJ": 25.0158,
+      "WA": 22.9507,
+      "MT": 20.0424,
+      "MD": 17.6179,
+      "NV": 16.1811,
+      "AK": 15.1951,
+      "MA": 13.4803,
+      "OR": 11.8644,
+      "PR": 11.7586,
+      "CT": 8.3789,
+      "HI": 8.19,
+      "DE": 7.0257,
+      "SD": 5.4617,
+      "ID": 4.4025,
+      "RI": 3.2408,
+      "ME": 3.071,
+      "NH": 2.3939,
+      "GU": 1.2209,
+      "VI": 0.6544,
+      "VT": 0.4348,
+      "DC": 0.241
+    }
+  },
+  "2018": {
+    "total_mmtco2e": 2778.8243,
+    "power_mmtco2e": 1749.8913,
+    "n_facilities": 6581,
+    "sectors": {
+      "Power Plants": 1710.4538,
+      "Minerals": 113.3175,
+      "Chemicals": 105.0276,
+      "Other": 104.5304,
+      "Waste": 98.326,
+      "Petroleum and Natural Gas Systems": 91.7717,
+      "Metals": 72.2579,
+      "Petroleum Product Suppliers,Refineries": 66.8685,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 63.997,
+      "Power Plants,Waste": 38.1482,
+      "Chemicals,Suppliers of CO2": 28.5858,
+      "Power Plants,Suppliers of CO2": 25.3663,
+      "Pulp and Paper,Waste": 23.9105,
+      "Chemicals,Waste": 22.8314,
+      "Chemicals,Refineries,Suppliers of CO2": 18.7157,
+      "Other,Waste": 17.7587,
+      "Other,Power Plants": 17.6966,
+      "Metals,Waste": 13.8775,
+      "Pulp and Paper": 13.4429,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 11.6676,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 10.2161,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 6.9731,
+      "Metals,Minerals": 6.3601,
+      "Chemicals,Refineries": 6.2038,
+      "Refineries": 5.9778,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.5805,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 5.4948,
+      "Metals,Power Plants": 5.379,
+      "Chemicals,Refineries,Waste": 5.0823,
+      "Chemicals,Industrial Gas Suppliers": 4.8433,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.8126,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 4.4994,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.3685,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.3281,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 4.0823,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 4.0224,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 3.7984,
+      "Minerals,Waste": 3.1357,
+      "Chemicals,Power Plants": 2.9627,
+      "Other,Suppliers of CO2,Waste": 2.8185,
+      "Petroleum and Natural Gas Systems,Power Plants": 2.642,
+      "Pulp and Paper,Suppliers of CO2,Waste": 2.3777,
+      "Chemicals,Petroleum Product Suppliers": 2.333,
+      "Chemicals,Power Plants,Waste": 2.0907,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.057,
+      "Other,Suppliers of CO2": 2.0457,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.4363,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.9458,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7039,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.5324,
+      "Refineries,Waste": 0.488,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.3757,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.3562,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.2202,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.181,
+      "Pulp and Paper,Suppliers of CO2": 0.1649,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.1094,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0892,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0625,
+      "Other,Petroleum and Natural Gas Systems": 0.0545,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0543,
+      "Industrial Gas Suppliers,Other": 0.0122,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0003
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 18.4296,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 16.6952,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 16.4009,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 16.3258,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 14.8706,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 14.8468,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 14.6208,
+        "sector": "Power Plants,Suppliers of CO2"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 14.4727,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Navajo Generating Station",
+        "state": "AZ",
+        "emissions_mmtco2e": 13.9607,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Bowen",
+        "state": "GA",
+        "emissions_mmtco2e": 13.4372,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 390.0268,
+      "LA": 145.1722,
+      "IN": 143.0467,
+      "FL": 132.5793,
+      "PA": 112.6218,
+      "OH": 112.3759,
+      "IL": 105.1528,
+      "CA": 95.5112,
+      "AL": 88.0985,
+      "KY": 86.2301,
+      "MI": 84.622,
+      "WV": 79.2819,
+      "MO": 78.9544,
+      "GA": 68.8982,
+      "WY": 59.333,
+      "NC": 58.829,
+      "OK": 57.6265,
+      "AZ": 55.8303,
+      "IA": 55.5255,
+      "WI": 50.522,
+      "AR": 47.3277,
+      "VA": 45.3206,
+      "CO": 45.2737,
+      "MN": 44.3733,
+      "TN": 41.8638,
+      "MS": 41.5802,
+      "ND": 40.6572,
+      "SC": 38.0973,
+      "KS": 37.1708,
+      "NY": 36.6482,
+      "UT": 36.3512,
+      "NE": 31.5497,
+      "NM": 28.1818,
+      "NJ": 24.7507,
+      "WA": 22.896,
+      "MD": 22.3873,
+      "MT": 19.7803,
+      "NV": 16.9571,
+      "AK": 14.2308,
+      "OR": 12.8506,
+      "PR": 11.5387,
+      "MA": 11.1227,
+      "CT": 10.2286,
+      "HI": 8.192,
+      "DE": 6.9967,
+      "SD": 5.8019,
+      "ID": 4.3536,
+      "RI": 3.5382,
+      "ME": 3.1912,
+      "NH": 2.7238,
+      "GU": 1.2364,
+      "VI": 0.6761,
+      "VT": 0.4403,
+      "DC": 0.2975
+    }
+  },
+  "2019": {
+    "total_mmtco2e": 2628.0474,
+    "power_mmtco2e": 1606.2746,
+    "n_facilities": 6580,
+    "sectors": {
+      "Power Plants": 1577.7646,
+      "Minerals": 112.0908,
+      "Chemicals": 107.2379,
+      "Other": 102.7138,
+      "Petroleum and Natural Gas Systems": 101.5328,
+      "Waste": 99.7401,
+      "Metals": 69.4111,
+      "Petroleum Product Suppliers,Refineries": 64.5243,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 63.192,
+      "Chemicals,Suppliers of CO2": 27.3808,
+      "Power Plants,Waste": 25.3303,
+      "Pulp and Paper,Waste": 24.5639,
+      "Power Plants,Suppliers of CO2": 22.4746,
+      "Chemicals,Refineries,Suppliers of CO2": 17.911,
+      "Chemicals,Waste": 17.5776,
+      "Other,Power Plants": 17.3157,
+      "Other,Waste": 16.7487,
+      "Metals,Waste": 14.6159,
+      "Pulp and Paper": 12.9507,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 12.3223,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 9.5618,
+      "Injection of CO2,Power Plants,Suppliers of CO2": 7.7394,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 7.6556,
+      "Metals,Minerals": 6.2009,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.9172,
+      "Refineries": 5.9043,
+      "Chemicals,Refineries": 5.8882,
+      "Chemicals,Industrial Gas Suppliers": 5.5449,
+      "Metals,Power Plants": 5.2353,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.9845,
+      "Chemicals,Refineries,Waste": 4.8548,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.4022,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.3595,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 4.2646,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.6517,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 3.5231,
+      "Chemicals,Power Plants": 3.3073,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 3.1378,
+      "Minerals,Waste": 3.1178,
+      "Other,Suppliers of CO2": 2.6404,
+      "Chemicals,Petroleum Product Suppliers": 2.3674,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 2.3003,
+      "Other,Suppliers of CO2,Waste": 2.2881,
+      "Petroleum and Natural Gas Systems,Power Plants": 2.2579,
+      "Chemicals,Power Plants,Waste": 2.1714,
+      "Pulp and Paper,Suppliers of CO2,Waste": 1.8712,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.5232,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.7633,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7602,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.5397,
+      "Refineries,Waste": 0.4973,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2765,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.2598,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.2505,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.2264,
+      "Pulp and Paper,Suppliers of CO2": 0.164,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0622,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.056,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0467,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.038,
+      "Other,Petroleum and Natural Gas Systems": 0.0254,
+      "Industrial Gas Suppliers,Other": 0.0114,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0002
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 19.1697,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 15.1447,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Colstrip",
+        "state": "MT",
+        "emissions_mmtco2e": 14.2776,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 14.1802,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Scherer",
+        "state": "GA",
+        "emissions_mmtco2e": 13.7644,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 13.0448,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 12.8625,
+        "sector": "Power Plants,Suppliers of CO2"
+      },
+      {
+        "name": "PRAIRIE STATE GENERATING STATION",
+        "state": "IL",
+        "emissions_mmtco2e": 12.7372,
+        "sector": "Other,Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 12.7041,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Oak Grove",
+        "state": "TX",
+        "emissions_mmtco2e": 12.3368,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 383.1735,
+      "LA": 146.9551,
+      "IN": 128.4583,
+      "FL": 119.6154,
+      "PA": 113.9138,
+      "OH": 103.1377,
+      "IL": 96.0069,
+      "CA": 91.4634,
+      "AL": 81.5639,
+      "MI": 78.6326,
+      "KY": 78.294,
+      "WV": 75.0484,
+      "MO": 71.3444,
+      "GA": 65.6376,
+      "NC": 56.0401,
+      "WY": 54.5893,
+      "AZ": 51.6576,
+      "OK": 51.2676,
+      "IA": 48.7357,
+      "CO": 45.0154,
+      "WI": 43.2854,
+      "VA": 42.3907,
+      "AR": 42.0819,
+      "TN": 40.096,
+      "MS": 39.9558,
+      "MN": 39.6031,
+      "ND": 37.7559,
+      "UT": 36.2332,
+      "KS": 33.9639,
+      "SC": 33.8381,
+      "NY": 33.5425,
+      "NM": 29.7546,
+      "NE": 28.8371,
+      "WA": 27.2682,
+      "NJ": 24.9979,
+      "MT": 20.8725,
+      "MD": 18.5011,
+      "NV": 16.9994,
+      "OR": 15.1149,
+      "AK": 14.3241,
+      "PR": 12.5066,
+      "CT": 9.5166,
+      "MA": 9.3055,
+      "HI": 8.0196,
+      "SD": 6.3548,
+      "DE": 5.9161,
+      "ID": 5.107,
+      "RI": 3.2188,
+      "ME": 2.9235,
+      "NH": 2.4369,
+      "GU": 1.2488,
+      "VI": 0.786,
+      "VT": 0.4629,
+      "DC": 0.2775
+    }
+  },
+  "2020": {
+    "total_mmtco2e": 2402.6764,
+    "power_mmtco2e": 1438.6171,
+    "n_facilities": 6556,
+    "sectors": {
+      "Power Plants": 1424.9706,
+      "Minerals": 107.0592,
+      "Chemicals": 105.0357,
+      "Petroleum and Natural Gas Systems": 98.4659,
+      "Waste": 95.5196,
+      "Other": 95.4691,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 61.177,
+      "Metals": 59.2044,
+      "Petroleum Product Suppliers,Refineries": 56.1423,
+      "Chemicals,Suppliers of CO2": 28.0477,
+      "Pulp and Paper,Waste": 24.6991,
+      "Power Plants,Waste": 23.0568,
+      "Chemicals,Waste": 18.6324,
+      "Other,Power Plants": 16.2982,
+      "Other,Waste": 15.2645,
+      "Pulp and Paper": 12.9642,
+      "Metals,Waste": 12.8047,
+      "Power Plants,Suppliers of CO2": 12.6802,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 12.269,
+      "Chemicals,Refineries,Suppliers of CO2": 11.1808,
+      "Chemicals,Refineries": 9.3621,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 8.5973,
+      "Petroleum Product Suppliers,Power Plants,Refineries": 6.5581,
+      "Metals,Minerals": 6.1732,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.9696,
+      "Metals,Power Plants": 5.9634,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 5.1063,
+      "Refineries": 4.8618,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 4.8102,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 4.7878,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.4653,
+      "Chemicals,Refineries,Waste": 4.3564,
+      "Chemicals,Industrial Gas Suppliers": 4.3525,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 3.5901,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.5083,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 3.2305,
+      "Chemicals,Power Plants": 2.7081,
+      "Minerals,Waste": 2.6906,
+      "Petroleum and Natural Gas Systems,Power Plants": 2.4876,
+      "Other,Suppliers of CO2": 2.4509,
+      "Chemicals,Petroleum Product Suppliers": 2.3523,
+      "Chemicals,Power Plants,Waste": 2.2286,
+      "Other,Suppliers of CO2,Waste": 2.0367,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 1.9756,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.5959,
+      "Pulp and Paper,Suppliers of CO2,Waste": 1.2509,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.7914,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.6337,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.6059,
+      "Refineries,Waste": 0.4433,
+      "Chemicals,Petroleum and Natural Gas Systems,Refineries": 0.4377,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.3419,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.2529,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2316,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.1595,
+      "Pulp and Paper,Suppliers of CO2": 0.1545,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.059,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0484,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0338,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0305,
+      "Other,Petroleum and Natural Gas Systems": 0.0294,
+      "Industrial Gas Suppliers,Other": 0.0111,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0003
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 17.2329,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 15.7107,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 13.7882,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 13.5184,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Oak Grove",
+        "state": "TX",
+        "emissions_mmtco2e": 13.1035,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 13.0592,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "PRAIRIE STATE GENERATING STATION",
+        "state": "IL",
+        "emissions_mmtco2e": 11.9501,
+        "sector": "Other,Power Plants"
+      },
+      {
+        "name": "Gibson",
+        "state": "IN",
+        "emissions_mmtco2e": 11.3911,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "EXXONMOBIL Bt Site",
+        "state": "TX",
+        "emissions_mmtco2e": 11.3082,
+        "sector": "Chemicals,Petroleum Product Suppliers,Refineries"
+      },
+      {
+        "name": "Jim Bridger",
+        "state": "WY",
+        "emissions_mmtco2e": 11.225,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 360.8427,
+      "LA": 135.9742,
+      "FL": 119.7309,
+      "IN": 111.8904,
+      "PA": 103.6025,
+      "OH": 101.6667,
+      "CA": 90.3275,
+      "IL": 77.1129,
+      "AL": 73.7958,
+      "MO": 68.0576,
+      "WV": 67.3948,
+      "KY": 66.3958,
+      "MI": 66.2685,
+      "GA": 52.9594,
+      "WY": 52.6594,
+      "OK": 48.4743,
+      "NC": 45.426,
+      "VA": 43.8339,
+      "AZ": 43.5074,
+      "MS": 41.2328,
+      "WI": 40.2874,
+      "IA": 40.0269,
+      "CO": 39.8706,
+      "ND": 36.1244,
+      "NY": 35.0401,
+      "MN": 34.6093,
+      "TN": 34.3801,
+      "UT": 33.2198,
+      "AR": 32.7516,
+      "KS": 32.6126,
+      "SC": 32.041,
+      "NM": 27.2984,
+      "NE": 26.6217,
+      "WA": 23.2294,
+      "NJ": 20.2458,
+      "NV": 16.7809,
+      "MD": 15.7201,
+      "MT": 14.5784,
+      "AK": 14.2634,
+      "PR": 13.9157,
+      "OR": 13.5632,
+      "CT": 10.7448,
+      "MA": 8.8483,
+      "HI": 7.1266,
+      "DE": 5.8757,
+      "SD": 5.2094,
+      "ID": 5.0109,
+      "RI": 3.4976,
+      "ME": 2.8947,
+      "NH": 2.1767,
+      "GU": 1.2131,
+      "VI": 1.0737,
+      "VT": 0.4327,
+      "DC": 0.2377
+    }
+  },
+  "2021": {
+    "total_mmtco2e": 2523.5133,
+    "power_mmtco2e": 1539.0179,
+    "n_facilities": 6529,
+    "sectors": {
+      "Power Plants": 1521.3301,
+      "Minerals": 111.7645,
+      "Chemicals": 109.5104,
+      "Petroleum and Natural Gas Systems": 101.9553,
+      "Other": 97.4672,
+      "Waste": 93.5059,
+      "Metals": 62.8091,
+      "Petroleum Product Suppliers,Refineries": 59.9722,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 58.6875,
+      "Chemicals,Suppliers of CO2": 26.9965,
+      "Power Plants,Waste": 25.2062,
+      "Pulp and Paper,Waste": 24.929,
+      "Chemicals,Waste": 18.6857,
+      "Other,Power Plants": 18.0777,
+      "Power Plants,Suppliers of CO2": 15.3232,
+      "Other,Waste": 14.4352,
+      "Metals,Waste": 14.2346,
+      "Pulp and Paper": 12.9124,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 11.8821,
+      "Chemicals,Refineries,Suppliers of CO2": 11.0682,
+      "Chemicals,Refineries": 9.6216,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 8.6526,
+      "Other,Petroleum Product Suppliers,Power Plants,Refineries": 6.7822,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 6.1376,
+      "Metals,Power Plants": 5.7244,
+      "Metals,Minerals": 5.6161,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 5.1772,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 5.0803,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 5.0404,
+      "Refineries": 4.9878,
+      "Chemicals,Refineries,Waste": 4.6272,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.2072,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 3.9446,
+      "Chemicals,Industrial Gas Suppliers": 3.8829,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 3.5234,
+      "Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.307,
+      "Minerals,Waste": 2.8935,
+      "Other,Suppliers of CO2": 2.7845,
+      "Chemicals,Power Plants": 2.7791,
+      "Chemicals,Petroleum Product Suppliers": 2.4147,
+      "Petroleum and Natural Gas Systems,Power Plants": 2.2999,
+      "Chemicals,Power Plants,Waste": 2.1564,
+      "Other,Suppliers of CO2,Waste": 2.0288,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 1.4893,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.473,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 1.1709,
+      "Pulp and Paper,Suppliers of CO2,Waste": 1.0342,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7105,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.5364,
+      "Chemicals,Petroleum and Natural Gas Systems,Refineries": 0.489,
+      "Refineries,Waste": 0.4822,
+      "Industrial Gas Suppliers,Other": 0.4022,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2986,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.2873,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.166,
+      "Pulp and Paper,Suppliers of CO2": 0.1564,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.148,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.069,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0638,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0506,
+      "Other,Petroleum and Natural Gas Systems": 0.0375,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.026,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 20.9986,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 15.7602,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 14.3792,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 13.9114,
+        "sector": "Power Plants,Suppliers of CO2"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 13.5151,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 13.4783,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Oak Grove",
+        "state": "TX",
+        "emissions_mmtco2e": 12.6173,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "PRAIRIE STATE GENERATING STATION",
+        "state": "IL",
+        "emissions_mmtco2e": 12.4968,
+        "sector": "Other,Power Plants"
+      },
+      {
+        "name": "EXXONMOBIL Bt Site",
+        "state": "TX",
+        "emissions_mmtco2e": 11.8111,
+        "sector": "Chemicals,Petroleum Product Suppliers,Refineries"
+      },
+      {
+        "name": "John E Amos",
+        "state": "WV",
+        "emissions_mmtco2e": 11.5287,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 373.1186,
+      "LA": 140.4217,
+      "IN": 119.9454,
+      "FL": 117.0594,
+      "PA": 110.9524,
+      "OH": 104.9136,
+      "CA": 91.9551,
+      "IL": 86.4341,
+      "AL": 78.4884,
+      "WV": 76.2002,
+      "MI": 74.2825,
+      "KY": 73.777,
+      "MO": 73.1987,
+      "GA": 56.7077,
+      "WY": 51.0749,
+      "NC": 48.8816,
+      "OK": 48.2847,
+      "IA": 47.7016,
+      "WI": 44.3819,
+      "AZ": 42.2545,
+      "CO": 41.5219,
+      "MS": 39.9237,
+      "AR": 39.6806,
+      "TN": 39.3011,
+      "VA": 38.9126,
+      "MN": 37.9687,
+      "UT": 37.3053,
+      "ND": 36.7895,
+      "NY": 36.5211,
+      "SC": 35.0103,
+      "KS": 34.5303,
+      "NE": 26.6874,
+      "NM": 25.8918,
+      "WA": 21.8855,
+      "NJ": 19.8205,
+      "MD": 18.3853,
+      "NV": 17.1375,
+      "MT": 16.9142,
+      "PR": 14.3188,
+      "AK": 14.2401,
+      "OR": 13.0462,
+      "CT": 11.1616,
+      "MA": 9.2176,
+      "HI": 7.0151,
+      "DE": 6.033,
+      "SD": 5.6149,
+      "ID": 5.2978,
+      "RI": 3.6981,
+      "ME": 3.3181,
+      "NH": 2.7271,
+      "VI": 1.5702,
+      "GU": 1.3637,
+      "VT": 0.441,
+      "DC": 0.2288
+    }
+  },
+  "2022": {
+    "total_mmtco2e": 2504.2789,
+    "power_mmtco2e": 1528.566,
+    "n_facilities": 6514,
+    "sectors": {
+      "Power Plants": 1513.7729,
+      "Chemicals": 112.1584,
+      "Minerals": 111.9694,
+      "Petroleum and Natural Gas Systems": 108.418,
+      "Other": 95.3723,
+      "Waste": 91.7625,
+      "Petroleum Product Suppliers,Refineries": 64.5117,
+      "Metals": 57.4135,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 55.8968,
+      "Chemicals,Suppliers of CO2": 29.6428,
+      "Power Plants,Waste": 23.9815,
+      "Pulp and Paper,Waste": 23.8524,
+      "Other,Power Plants": 16.2015,
+      "Other,Waste": 14.2989,
+      "Metals,Waste": 14.0577,
+      "Power Plants,Suppliers of CO2": 13.8423,
+      "Chemicals,Waste": 12.8007,
+      "Pulp and Paper": 12.5817,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 12.1219,
+      "Chemicals,Refineries,Suppliers of CO2": 11.2025,
+      "Chemicals,Refineries": 9.3879,
+      "Other,Petroleum Product Suppliers,Power Plants,Refineries": 7.4395,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 6.1413,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.7048,
+      "Metals,Minerals": 5.5986,
+      "Metals,Power Plants": 5.4666,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 5.0049,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 4.8168,
+      "Chemicals,Refineries,Waste": 4.6368,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 4.509,
+      "Chemicals,Industrial Gas Suppliers": 4.2204,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 4.135,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 3.9353,
+      "Refineries": 3.7567,
+      "Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.6803,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 3.3397,
+      "Other,Suppliers of CO2": 3.0557,
+      "Chemicals,Power Plants": 3.0368,
+      "Minerals,Waste": 3.0143,
+      "Chemicals,Petroleum Product Suppliers": 2.314,
+      "Chemicals,Power Plants,Waste": 2.1489,
+      "Other,Suppliers of CO2,Waste": 2.0193,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 1.7559,
+      "Petroleum and Natural Gas Systems,Power Plants": 1.7028,
+      "Chemicals,Other,Power Plants": 1.4047,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.3362,
+      "Pulp and Paper,Suppliers of CO2,Waste": 0.8254,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.6617,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.6425,
+      "Chemicals,Petroleum and Natural Gas Systems,Refineries": 0.5899,
+      "Refineries,Waste": 0.4902,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.3705,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2505,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.2277,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.1923,
+      "Pulp and Paper,Suppliers of CO2": 0.1552,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.1486,
+      "Injection of CO2,Other,Suppliers of CO2": 0.0828,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0615,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0507,
+      "Other,Petroleum and Natural Gas Systems": 0.0379,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0343,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0241,
+      "Industrial Gas Suppliers,Other": 0.0102,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0011
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 21.7754,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 15.8608,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 14.9081,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 13.3304,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Oak Grove",
+        "state": "TX",
+        "emissions_mmtco2e": 12.6978,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "EXXONMOBIL Bt Site",
+        "state": "TX",
+        "emissions_mmtco2e": 12.6119,
+        "sector": "Chemicals,Petroleum Product Suppliers,Refineries"
+      },
+      {
+        "name": "W A Parish",
+        "state": "TX",
+        "emissions_mmtco2e": 12.4362,
+        "sector": "Power Plants,Suppliers of CO2"
+      },
+      {
+        "name": "Harrison Power Station",
+        "state": "WV",
+        "emissions_mmtco2e": 11.6942,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Laramie River",
+        "state": "WY",
+        "emissions_mmtco2e": 11.5247,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 11.2986,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 383.3083,
+      "LA": 147.6045,
+      "IN": 116.7462,
+      "FL": 112.6329,
+      "PA": 108.2802,
+      "OH": 105.5533,
+      "CA": 91.4158,
+      "IL": 82.5577,
+      "AL": 79.6885,
+      "MI": 74.6301,
+      "KY": 72.6165,
+      "MO": 70.4433,
+      "WV": 67.8768,
+      "GA": 55.0656,
+      "WY": 52.723,
+      "NC": 48.9908,
+      "OK": 48.1604,
+      "IA": 44.5578,
+      "MS": 41.8567,
+      "AR": 40.8816,
+      "CO": 40.6418,
+      "AZ": 40.4377,
+      "WI": 39.3836,
+      "NY": 38.7174,
+      "TN": 38.3861,
+      "ND": 37.0773,
+      "VA": 36.502,
+      "MN": 36.3356,
+      "KS": 36.1705,
+      "SC": 34.9726,
+      "UT": 34.1183,
+      "NE": 27.7387,
+      "NM": 25.6684,
+      "WA": 21.7587,
+      "NJ": 20.602,
+      "MT": 17.5379,
+      "MD": 17.0188,
+      "NV": 16.1528,
+      "PR": 14.7808,
+      "AK": 14.36,
+      "OR": 12.0467,
+      "CT": 11.0297,
+      "MA": 9.8517,
+      "HI": 6.9768,
+      "DE": 6.621,
+      "SD": 6.1072,
+      "ID": 5.1992,
+      "ME": 3.8118,
+      "RI": 3.0324,
+      "NH": 2.9056,
+      "GU": 1.3082,
+      "VI": 0.7289,
+      "VT": 0.4172,
+      "DC": 0.2914
+    }
+  },
+  "2023": {
+    "total_mmtco2e": 2382.8404,
+    "power_mmtco2e": 1416.8283,
+    "n_facilities": 6470,
+    "sectors": {
+      "Power Plants": 1403.9403,
+      "Chemicals": 113.059,
+      "Petroleum and Natural Gas Systems": 109.4405,
+      "Minerals": 106.791,
+      "Other": 94.853,
+      "Waste": 92.2155,
+      "Petroleum Product Suppliers,Refineries": 63.996,
+      "Metals": 59.1704,
+      "Chemicals,Petroleum Product Suppliers,Refineries": 55.3747,
+      "Chemicals,Suppliers of CO2": 30.2804,
+      "Pulp and Paper,Waste": 22.5591,
+      "Power Plants,Waste": 22.5138,
+      "Other,Power Plants": 15.8438,
+      "Metals,Waste": 14.3178,
+      "Other,Waste": 13.6208,
+      "Pulp and Paper": 12.283,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 12.184,
+      "Power Plants,Suppliers of CO2": 10.8924,
+      "Chemicals,Waste": 10.0698,
+      "Chemicals,Refineries": 9.5578,
+      "Other,Petroleum Product Suppliers,Power Plants,Refineries": 6.6333,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2": 6.1247,
+      "Chemicals,Other,Refineries,Suppliers of CO2": 6.1189,
+      "Chemicals,Petroleum Product Suppliers,Power Plants,Refineries": 5.9798,
+      "Metals,Minerals": 5.783,
+      "Chemicals,Other,Petroleum Product Suppliers,Power Plants,Refineries": 5.2203,
+      "Chemicals,Other,Petroleum and Natural Gas Systems,Waste": 5.2153,
+      "Injection of CO2,Petroleum and Natural Gas Systems,Suppliers of CO2": 5.1412,
+      "Chemicals,Refineries,Suppliers of CO2": 5.0763,
+      "Metals,Power Plants": 4.8675,
+      "Chemicals,Refineries,Waste": 4.7846,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Suppliers of CO2,Waste": 4.197,
+      "Injection of CO2,Other,Suppliers of CO2,Waste": 3.8192,
+      "Refineries": 3.6258,
+      "Petroleum Product Suppliers,Power Plants,Refineries,Suppliers of CO2": 3.4161,
+      "Petroleum and Natural Gas Systems,Power Plants": 3.177,
+      "Other,Suppliers of CO2": 3.1104,
+      "Chemicals,Industrial Gas Suppliers": 3.029,
+      "Chemicals,Coal-based Liquid Fuel Supply,Suppliers of CO2": 2.8735,
+      "Minerals,Waste": 2.8103,
+      "Chemicals,Power Plants": 2.6896,
+      "Chemicals,Petroleum Product Suppliers": 2.5042,
+      "Chemicals,Power Plants,Waste": 2.2201,
+      "Other,Suppliers of CO2,Waste": 2.1461,
+      "Chemicals,Other,Power Plants": 1.5797,
+      "Chemicals,Petroleum Product Suppliers,Refineries,Waste": 1.3675,
+      "Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Power Plants": 1.3296,
+      "Petroleum Product Suppliers,Refineries,Waste": 0.7333,
+      "Pulp and Paper,Suppliers of CO2,Waste": 0.7097,
+      "Petroleum and Natural Gas Systems,Suppliers of CO2": 0.7023,
+      "Chemicals,Petroleum and Natural Gas Systems,Refineries": 0.5453,
+      "Refineries,Waste": 0.4915,
+      "Injection of CO2,Petroleum and Natural Gas Systems": 0.4315,
+      "Petroleum Product Suppliers,Petroleum and Natural Gas Systems": 0.2648,
+      "Natural Gas and Natural Gas Liquids Suppliers,Power Plants": 0.1857,
+      "Industrial Gas Suppliers,Other": 0.1759,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Other": 0.1554,
+      "Pulp and Paper,Suppliers of CO2": 0.1531,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems,Suppliers of CO2": 0.1477,
+      "Injection of CO2,Other,Suppliers of CO2": 0.0862,
+      "Injection of CO2,Natural Gas and Natural Gas Liquids Suppliers,Petroleum and Natural Gas Systems": 0.0746,
+      "Import and Export of Equipment Containing Fluorintaed GHGs,Industrial Gas Suppliers,Other": 0.0547,
+      "Chemicals,Industrial Gas Suppliers,Waste": 0.0534,
+      "Other,Petroleum and Natural Gas Systems": 0.0512,
+      "Chemicals,Industrial Gas Suppliers,Minerals": 0.0208,
+      "Natural Gas and Natural Gas Liquids Suppliers,Other": 0.0
+    },
+    "top10": [
+      {
+        "name": "James H Miller Jr",
+        "state": "AL",
+        "emissions_mmtco2e": 16.5584,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Labadie",
+        "state": "MO",
+        "emissions_mmtco2e": 15.3887,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Gen J M Gavin",
+        "state": "OH",
+        "emissions_mmtco2e": 13.4512,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Martin Lake",
+        "state": "TX",
+        "emissions_mmtco2e": 12.7879,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "EXXONMOBIL Bt Site",
+        "state": "TX",
+        "emissions_mmtco2e": 12.6935,
+        "sector": "Chemicals,Petroleum Product Suppliers,Refineries"
+      },
+      {
+        "name": "Oak Grove",
+        "state": "TX",
+        "emissions_mmtco2e": 12.2786,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "PRAIRIE STATE GENERATING STATION",
+        "state": "IL",
+        "emissions_mmtco2e": 11.4563,
+        "sector": "Other,Power Plants"
+      },
+      {
+        "name": "Monroe",
+        "state": "MI",
+        "emissions_mmtco2e": 11.4133,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Harrison Power Station",
+        "state": "WV",
+        "emissions_mmtco2e": 11.18,
+        "sector": "Power Plants"
+      },
+      {
+        "name": "Laramie River",
+        "state": "WY",
+        "emissions_mmtco2e": 10.9795,
+        "sector": "Power Plants"
+      }
+    ],
+    "states": {
+      "TX": 379.8493,
+      "LA": 144.3185,
+      "FL": 108.9102,
+      "IN": 107.9039,
+      "PA": 102.7332,
+      "OH": 99.8004,
+      "CA": 90.4835,
+      "AL": 72.0303,
+      "IL": 71.3551,
+      "MI": 67.5453,
+      "KY": 65.0828,
+      "WV": 64.5589,
+      "MO": 59.5268,
+      "GA": 54.792,
+      "WY": 50.0545,
+      "OK": 48.0091,
+      "NC": 44.2711,
+      "IA": 43.592,
+      "AZ": 41.9851,
+      "MS": 41.6368,
+      "WI": 39.3546,
+      "CO": 37.799,
+      "AR": 37.7651,
+      "TN": 37.265,
+      "NY": 36.3795,
+      "SC": 35.1369,
+      "VA": 34.6711,
+      "ND": 34.4931,
+      "MN": 34.4637,
+      "KS": 32.4344,
+      "UT": 28.2761,
+      "NE": 25.6265,
+      "WA": 24.2459,
+      "NM": 20.8891,
+      "NJ": 19.3521,
+      "MT": 18.0075,
+      "NV": 15.5953,
+      "MD": 14.4147,
+      "AK": 14.2127,
+      "OR": 13.7346,
+      "PR": 13.73,
+      "CT": 10.8894,
+      "MA": 8.8122,
+      "HI": 6.7062,
+      "SD": 6.3,
+      "DE": 5.7941,
+      "ID": 5.6683,
+      "RI": 4.117,
+      "ME": 3.4211,
+      "NH": 2.3925,
+      "GU": 1.3049,
+      "VI": 0.5812,
+      "VT": 0.2888,
+      "DC": 0.2793
+    }
+  }
+};
+
+// Collapse sector keys to primary sector (first comma-separated)
+function primarySector(key) {
+  return key.split(',')[0].trim();
+}
+
+// Aggregate sector dict by primary sector
+function aggregateSectors(sectorObj) {
+  const agg = {};
+  for (const [k, v] of Object.entries(sectorObj)) {
+    const p = primarySector(k);
+    agg[p] = (agg[p] || 0) + v;
+  }
+  return Object.fromEntries(Object.entries(agg).sort((a,b)=>b[1]-a[1]));
+}
+
+const YEARS = Object.keys(RAW).map(Number).sort();
+let selectedYear = YEARS[YEARS.length - 1];
+
+const PALETTE = [
+  '#4f9cf9','#f97316','#22c55e','#a855f7','#f43f5e',
+  '#06b6d4','#eab308','#ec4899','#14b8a6','#8b5cf6','#64748b'
+];
+
+// Chart instances
+let trendChart, facChart, sectorChart, donutChart;
+
+function fmt(n) { return n.toLocaleString('en-US', {maximumFractionDigits:1, minimumFractionDigits:1}); }
+function fmtInt(n) { return n.toLocaleString('en-US'); }
+function pct(a,b) { return b ? ((a-b)/b*100).toFixed(1) : null; }
+
+function renderYearBar() {
+  const bar = document.querySelector('.year-bar');
+  bar.innerHTML = '<span>Year:</span>';
+  YEARS.forEach(y => {
+    const btn = document.createElement('button');
+    btn.className = 'year-btn' + (y === selectedYear ? ' active' : '');
+    btn.textContent = y;
+    btn.onclick = () => { selectedYear = y; update(); };
+    bar.appendChild(btn);
+  });
+}
+
+function updateKPIs(d, prev) {
+  document.getElementById('kpi-total').textContent = fmt(d.total_mmtco2e);
+  document.getElementById('kpi-power').textContent = fmt(d.power_mmtco2e);
+  document.getElementById('kpi-fac').textContent = fmtInt(d.n_facilities);
+  document.getElementById('kpi-share').textContent = (d.power_mmtco2e/d.total_mmtco2e*100).toFixed(1) + '%';
+
+  function delta(el, cur, prv) {
+    if (!prv) { el.innerHTML = ''; return; }
+    const diff = pct(cur, prv);
+    const down = cur < prv;
+    el.className = 'kpi-delta ' + (down ? 'down' : 'up');
+    el.innerHTML = (down ? '▼ ' : '▲ ') + Math.abs(diff) + '% vs ' + (selectedYear-1);
+  }
+  delta(document.getElementById('kpi-total-delta'), d.total_mmtco2e, prev?.total_mmtco2e);
+  delta(document.getElementById('kpi-power-delta'), d.power_mmtco2e, prev?.power_mmtco2e);
+  delta(document.getElementById('kpi-fac-delta'), d.n_facilities, prev?.n_facilities);
+}
+
+function renderTrendChart() {
+  const labels = YEARS;
+  const totals = YEARS.map(y => RAW[y].total_mmtco2e);
+  const powers = YEARS.map(y => RAW[y].power_mmtco2e);
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Total GHG',
+          data: totals,
+          borderColor: '#4f9cf9',
+          backgroundColor: 'rgba(79,156,249,0.1)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 5
+        },
+        {
+          label: 'Power Sector',
+          data: powers,
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.08)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 5
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8892a4', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)} MMt`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8892a4', font: { size: 11 } }, grid: { color: '#2d3148' } },
+        y: {
+          ticks: { color: '#8892a4', font: { size: 11 }, callback: v => fmt(v) },
+          grid: { color: '#2d3148' }
+        }
+      }
+    }
+  });
+}
+
+function renderFacChart() {
+  const facs = YEARS.map(y => RAW[y].n_facilities);
+
+  if (facChart) facChart.destroy();
+  facChart = new Chart(document.getElementById('facChart'), {
+    type: 'bar',
+    data: {
+      labels: YEARS,
+      datasets: [{
+        label: 'Facilities',
+        data: facs,
+        backgroundColor: YEARS.map(y => y === selectedYear ? '#22c55e' : 'rgba(34,197,94,0.3)'),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${fmtInt(ctx.parsed.y)} facilities` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8892a4', font: { size: 11 } }, grid: { color: '#2d3148' } },
+        y: {
+          ticks: { color: '#8892a4', font: { size: 11 }, callback: v => fmtInt(v) },
+          grid: { color: '#2d3148' }
+        }
+      }
+    }
+  });
+}
+
+function renderSectorChart(d) {
+  const agg = aggregateSectors(d.sectors);
+  const topSectors = Object.entries(agg).slice(0, 10);
+  const labels = topSectors.map(([k]) => k);
+  const vals = topSectors.map(([,v]) => v);
+
+  document.getElementById('sector-sub').textContent = `Top 10 primary sectors · ${selectedYear}`;
+
+  if (sectorChart) sectorChart.destroy();
+  sectorChart = new Chart(document.getElementById('sectorChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'MMtCO₂e',
+        data: vals,
+        backgroundColor: PALETTE,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed.x)} MMtCO₂e` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8892a4', font: { size: 11 }, callback: v => fmt(v) }, grid: { color: '#2d3148' } },
+        y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderDonut(d) {
+  const agg = aggregateSectors(d.sectors);
+  const topSectors = Object.entries(agg).slice(0, 8);
+  const labels = topSectors.map(([k]) => k);
+  const vals = topSectors.map(([,v]) => v);
+
+  document.getElementById('donut-sub').textContent = `Primary sector share · ${selectedYear}`;
+
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: vals,
+        backgroundColor: PALETTE,
+        borderColor: '#1a1d27',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#8892a4', font: { size: 10 }, boxWidth: 10, padding: 8 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${fmt(ctx.parsed)} MMt (${(ctx.parsed/vals.reduce((a,b)=>a+b,0)*100).toFixed(1)}%)`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderStateList(d) {
+  const top15 = Object.entries(d.states).slice(0, 15);
+  const maxVal = top15[0][1];
+  const container = document.getElementById('stateList');
+  document.getElementById('state-sub').textContent = `Top 15 states · ${selectedYear}`;
+  container.innerHTML = top15.map(([state, val]) => `
+    <div class="state-bar-row">
+      <div class="state-label">${state}</div>
+      <div class="state-bar-bg"><div class="state-bar-fill" style="width:${(val/maxVal*100).toFixed(1)}%"></div></div>
+      <div class="state-value">${fmt(val)}</div>
+    </div>
+  `).join('');
+}
+
+function renderTop10(d) {
+  document.getElementById('top10-sub').textContent = `Largest individual emitters · ${selectedYear}`;
+  const tbody = document.getElementById('top10Body');
+  tbody.innerHTML = d.top10.map((r, i) => {
+    const cls = i===0 ? 'r1' : i===1 ? 'r2' : i===2 ? 'r3' : 'rn';
+    return `<tr>
+      <td><span class="rank-badge ${cls}">${i+1}</span></td>
+      <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
+      <td><span class="sector-chip">${r.state}</span></td>
+      <td style="text-align:right;font-weight:600;color:#4f9cf9">${fmt(r.emissions_mmtco2e)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function update() {
+  // Update year bar active state
+  document.querySelectorAll('.year-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.textContent) === selectedYear);
+  });
+
+  // Update facility chart bar colors
+  if (facChart) {
+    facChart.data.datasets[0].backgroundColor = YEARS.map(y =>
+      y === selectedYear ? '#22c55e' : 'rgba(34,197,94,0.3)'
+    );
+    facChart.update();
+  }
+
+  const d = RAW[selectedYear];
+  const prevYear = selectedYear - 1;
+  const prev = RAW[prevYear] || null;
+
+  updateKPIs(d, prev);
+  renderSectorChart(d);
+  renderDonut(d);
+  renderStateList(d);
+  renderTop10(d);
+}
+
+// Init
+(function init() {
+  renderYearBar();
+  renderTrendChart();
+  renderFacChart();
+  update();
+})();
+</script>
+</body>
+</html>
