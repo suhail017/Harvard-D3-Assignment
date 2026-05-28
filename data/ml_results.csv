@@ -1,0 +1,8 @@
+model,r2,block
+Baseline (mean),-0.0007485191889080589,baseline
+Climate only,0.047864940079313634,climate
+Structure only,0.3670298774337595,structure
+Structure + Climate,0.3645164612771006,struct+clim
+Lag only,0.8870167067224517,lag
+Structure + Lag,0.8843777476923801,struct+lag
+Structure + Lag + Climate,0.8834490244010437,full

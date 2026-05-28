@@ -1,0 +1,6 @@
+sector,var,beta,se,p
+All sectors,Summer temp,0.0316,0.0101,0.0018
+Power Plants,Summer temp,0.1111,0.0306,0.0003
+Power Plants,Summer VPD,0.0171,0.0259,0.51
+Oil & Gas,Summer temp,0.0316,0.0258,0.22
+Oil & Gas,Summer VPD,-0.0136,0.0189,0.47
