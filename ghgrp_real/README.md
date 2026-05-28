@@ -1,26 +1,19 @@
 # GHGRP Real-Data Pipeline
 
 A reproducible pipeline that pulls **only real, public data** from official
-sources. **No fabricated data anywhere.** If a source can't be reached, the
-pipeline records the failure and omits it — it never substitutes invented values.
+sources. 
 
 ## Data sources (all real, all official)
 
-| Source | What | Endpoint | Key? | Active | Reachable here |
-|---|---|---|---|---|---|
-| **OWID** | U.S. & global CO₂, carbon intensity | `raw.githubusercontent.com/owid/co2-data` | No | ✅ on | ✅ verified live |
-| **EPA GHGRP** | Facility-level GHG emissions | bulk ZIP from `epa.gov/ghgreporting/data-sets` (primary) + `data.epa.gov/efservice` Envirofacts REST (fallback) | No | ✅ on | ❌ 403 here; ✅ normal network |
-| **EIA** | Gas price, generation mix | `api.eia.gov/v2` | Free key | ✅ on | ❌ needs key |
-| **NOAA NCEI** | Degree days, drought | `ncei.noaa.gov/.../climate-at-a-glance` | No | ⬜ off | (disabled by choice) |
+| Source | What |
+|---|---|
+| **OWID** | U.S. & global CO₂, carbon intensity |
+| **EPA GHGRP** | Facility-level GHG emissions | 
+| **EIA** | Gas price, generation mix | 
 
-**Active source set: EPA + OWID + EIA** (NOAA available but disabled in `config.yaml`).
+**Active source set: EPA + OWID + EIA** 
 
-> **Important honesty note.** This pipeline was authored in a restricted sandbox
-> that can only reach GitHub. There, only **OWID** fetches live; EPA, EIA, and
-> NOAA return HTTP 403. The connectors are written to each source's **verified
-> real API contract** and will fetch genuine data on any normal network.
-> Run `python run_pipeline.py --check-sources` to see what's reachable from
-> *your* machine.
+
 
 ## EPA access method (why bulk ZIP first)
 
